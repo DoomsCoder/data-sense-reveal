@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
@@ -6,6 +7,8 @@ import { Upload, X, FileSpreadsheet, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { parseCSV } from "@/utils/csvParser";
 import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FileUploaderProps {
   onFileUpload: (file: File) => void;
@@ -16,6 +19,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUpload }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { user } = useAuth();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length) {
@@ -59,6 +63,16 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUpload }) => {
         
         // Call the onFileUpload callback
         onFileUpload(selectedFile);
+
+        // Save dataset to Supabase if user is authenticated
+        if (user) {
+          await supabase.from('dataset_history').insert({
+            user_id: user.id,
+            file_name: selectedFile.name,
+            file_size: selectedFile.size,
+            summary: data.summary
+          });
+        }
         
         // Navigate to dashboard after successful upload
         toast.success("File analyzed successfully!");

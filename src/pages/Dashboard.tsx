@@ -10,6 +10,7 @@ import BarChart from "@/components/visualizations/BarChart";
 import PieChart from "@/components/visualizations/PieChart";
 import DataTable from "@/components/visualizations/DataTable";
 import DataSummary from "@/components/DataSummary";
+import DatasetHistory from "@/components/DatasetHistory";
 import { Loader2, Upload, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -28,10 +29,6 @@ const Dashboard = () => {
     const storedFileName = localStorage.getItem("csvFileName");
     if (storedFileName) {
       setFileName(storedFileName);
-    } else {
-      // No filename in localStorage, redirect to home
-      toast.error("Please upload a CSV file first");
-      navigate("/");
     }
   }, [navigate, isAuthenticated]);
   
@@ -43,9 +40,7 @@ const Dashboard = () => {
       const existingData = queryClient.getQueryData<ParsedData>(["csvData", fileName]);
       if (existingData) return existingData;
       
-      // If no data in cache but we have filename, show error and redirect
-      toast.error("Session expired. Please upload your file again.");
-      navigate("/");
+      // If no data in cache and no redirect was performed, show empty state
       return null;
     },
     enabled: !!fileName && isAuthenticated,
@@ -62,15 +57,21 @@ const Dashboard = () => {
       </div>
     );
   }
-  
-  if (error || !data) {
+
+  if (!fileName || error || !data) {
     return (
       <div className="container mx-auto max-w-6xl py-8">
-        <Card className="text-center p-8">
+        <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+        
+        <div className="mb-8">
+          <DatasetHistory />
+        </div>
+        
+        <Card className="text-center p-8 mb-8">
           <CardContent>
-            <h2 className="text-2xl font-semibold mb-4">Unable to load dashboard</h2>
+            <h2 className="text-2xl font-semibold mb-4">No Data Currently Active</h2>
             <p className="text-muted-foreground mb-6">
-              There was an error processing your file or no file has been uploaded.
+              Select a dataset from your history above or upload a new CSV file to start analyzing.
             </p>
             <Button onClick={() => navigate("/")} className="bg-deep-green hover:bg-deep-green/90">
               <Upload className="mr-2 h-4 w-4" />
@@ -100,6 +101,10 @@ const Dashboard = () => {
             Upload New File
           </Button>
         </div>
+      </div>
+      
+      <div className="mb-8">
+        <DatasetHistory />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
