@@ -5,9 +5,10 @@ import { parseCSV, ParsedData } from "@/utils/csvParser";
 import FileUploader from "@/components/FileUploader";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { FileSpreadsheet, BarChart2, PieChart, Table, ArrowRight } from "lucide-react";
+import { FileSpreadsheet, BarChart2, PieChart, Table, ArrowRight, Database, Zap, Users, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -16,7 +17,7 @@ interface FeatureCardProps {
 }
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description }) => (
-  <Card className="bg-white">
+  <Card className="bg-white hover:shadow-md transition-all duration-300 hover:-translate-y-1">
     <CardContent className="p-6">
       <div className="flex flex-col items-center text-center">
         <div className="h-12 w-12 rounded-full bg-mint/20 flex items-center justify-center mb-4">
@@ -33,6 +34,7 @@ const Index = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { isAuthenticated } = useAuth();
   
   // Check if we have a previously uploaded file
   useEffect(() => {
@@ -92,6 +94,29 @@ const Index = () => {
       description: "View and search through your data with an intuitive tabular interface."
     }
   ];
+  
+  const advancedFeatures = [
+    {
+      icon: <Database className="h-6 w-6 text-deep-green" />,
+      title: "Data Storage",
+      description: "Your data is securely stored and accessible anytime, allowing for seamless analysis across sessions."
+    },
+    {
+      icon: <Zap className="h-6 w-6 text-deep-green" />,
+      title: "Fast Processing",
+      description: "Advanced algorithms process even large datasets quickly, giving you results within seconds."
+    },
+    {
+      icon: <Users className="h-6 w-6 text-deep-green" />,
+      title: "Team Collaboration",
+      description: "Share your insights with teammates and collaborate on data analysis projects."
+    },
+    {
+      icon: <Lock className="h-6 w-6 text-deep-green" />,
+      title: "Secure Access",
+      description: "Your data is protected with enterprise-grade security and access controls."
+    }
+  ];
 
   return (
     <div className="container mx-auto max-w-6xl">
@@ -100,11 +125,24 @@ const Index = () => {
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Upload any CSV file and instantly generate visualizations and insights. No complex setup required.
         </p>
+        
+        {!isAuthenticated && (
+          <div className="mt-6 flex justify-center gap-4">
+            <Button asChild className="bg-deep-green hover:bg-deep-green/90">
+              <a href="/signup">Sign up for free</a>
+            </Button>
+            <Button asChild variant="outline">
+              <a href="/login">Log in</a>
+            </Button>
+          </div>
+        )}
       </div>
       
-      <div className="bg-white p-8 rounded-lg shadow-sm border mb-12">
-        <FileUploader onFileUpload={handleFileUpload} />
-      </div>
+      {isAuthenticated && (
+        <div className="bg-white p-8 rounded-lg shadow-sm border mb-12">
+          <FileUploader onFileUpload={handleFileUpload} />
+        </div>
+      )}
       
       {parsedData && (
         <div className="bg-mint/10 p-6 rounded-lg border border-mint animate-fade-in mb-12">
@@ -137,6 +175,44 @@ const Index = () => {
               description={feature.description}
             />
           ))}
+        </div>
+      </div>
+      
+      <div className="mb-12 bg-gradient-to-r from-mint/20 to-deep-green/10 p-8 rounded-lg">
+        <h2 className="text-2xl font-semibold mb-6 text-center">Why Choose InsightViz</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {advancedFeatures.map((feature, index) => (
+            <FeatureCard
+              key={index}
+              icon={feature.icon}
+              title={feature.title}
+              description={feature.description}
+            />
+          ))}
+        </div>
+      </div>
+      
+      <div className="text-center mb-16">
+        <h2 className="text-2xl font-semibold mb-4">Ready to explore your data?</h2>
+        <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+          Join thousands of data professionals who use InsightViz to extract valuable insights from their data.
+        </p>
+        
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          {isAuthenticated ? (
+            <Button className="bg-deep-green hover:bg-deep-green/90" onClick={() => window.scrollTo(0, 0)}>
+              Upload your CSV now
+            </Button>
+          ) : (
+            <>
+              <Button asChild className="bg-deep-green hover:bg-deep-green/90">
+                <a href="/signup">Get started for free</a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="/login">Log in to your account</a>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

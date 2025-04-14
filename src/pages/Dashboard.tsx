@@ -10,15 +10,21 @@ import BarChart from "@/components/visualizations/BarChart";
 import PieChart from "@/components/visualizations/PieChart";
 import DataTable from "@/components/visualizations/DataTable";
 import DataSummary from "@/components/DataSummary";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, RefreshCw } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [fileName, setFileName] = useState<string>("");
+  const { isAuthenticated, user } = useAuth();
   
   // Get cached data or file from localStorage
   useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+    
     const storedFileName = localStorage.getItem("csvFileName");
     if (storedFileName) {
       setFileName(storedFileName);
@@ -27,7 +33,7 @@ const Dashboard = () => {
       toast.error("Please upload a CSV file first");
       navigate("/");
     }
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
   
   // Get data from query cache
   const { data, isLoading, error } = useQuery({
@@ -42,7 +48,7 @@ const Dashboard = () => {
       navigate("/");
       return null;
     },
-    enabled: !!fileName,
+    enabled: !!fileName && isAuthenticated,
   });
   
   if (isLoading) {
@@ -78,9 +84,22 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Exploring data from {fileName}</p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">Exploring data from {fileName}</p>
+        </div>
+        
+        <div className="mt-4 md:mt-0 flex space-x-4">
+          <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["csvData", fileName] })}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh Data
+          </Button>
+          <Button className="bg-deep-green hover:bg-deep-green/90" onClick={() => navigate("/")}>
+            <Upload className="mr-2 h-4 w-4" />
+            Upload New File
+          </Button>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
