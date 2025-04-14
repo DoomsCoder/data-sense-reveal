@@ -2,7 +2,6 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
-import { Toaster } from "@/components/ui/sonner";
 
 const AppLayout = () => {
   return (
@@ -11,7 +10,6 @@ const AppLayout = () => {
       <main className="flex-1 p-6">
         <Outlet />
       </main>
-      <Toaster position="bottom-right" />
     </div>
   );
 };
