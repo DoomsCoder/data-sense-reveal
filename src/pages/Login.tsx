@@ -101,8 +101,8 @@ const Login = () => {
               </Link>
             </div>
             
-            <Button variant="outline" className="w-full" as={Link} to="/">
-              Back to Home
+            <Button variant="outline" className="w-full" asChild>
+              <Link to="/">Back to Home</Link>
             </Button>
           </CardFooter>
         </Card>
