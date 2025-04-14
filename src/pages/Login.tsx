@@ -21,10 +21,10 @@ const Login = () => {
     
     try {
       await login(email, password);
-      toast.success("Login successful");
+      // Don't need to show a success toast here as the user will be redirected
     } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
-      console.error(error);
+      console.error("Login error in component:", error);
+      // Error is already handled in the AuthContext, no need to show another toast here
     } finally {
       setIsLoading(false);
     }

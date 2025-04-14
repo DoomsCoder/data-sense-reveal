@@ -27,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log("Auth state changed:", event, currentSession);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setLoading(false);
@@ -35,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Current session:", currentSession);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
@@ -46,16 +48,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log("Attempting login with:", email);
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Login error:", error);
+        throw error;
+      }
       
+      console.log("Login successful:", data);
       navigate("/dashboard");
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign in");
+      console.error("Login error caught:", error);
+      const errorMessage = error.message || "Failed to sign in";
+      
+      // More user-friendly error messages
+      if (errorMessage.includes("Invalid login credentials")) {
+        toast.error("Invalid email or password. Please check your credentials and try again.");
+      } else if (errorMessage.includes("Email not confirmed")) {
+        toast.error("Your email has not been verified. Please check your inbox for a verification link.");
+      } else {
+        toast.error(errorMessage);
+      }
+      
       throw error;
     } finally {
       setLoading(false);
@@ -65,7 +83,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (name: string, email: string, password: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log("Attempting signup with:", email);
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -75,11 +94,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Signup error:", error);
+        throw error;
+      }
       
-      toast.success("Sign up successful! Please check your email for verification link.");
-      navigate("/dashboard");
+      console.log("Signup response:", data);
+      
+      if (data.user && !data.user.confirmed_at) {
+        toast.success("Sign up successful! Please check your email for verification link.");
+      } else {
+        toast.success("Sign up successful! You can now log in.");
+      }
+      
+      navigate("/login");
     } catch (error: any) {
+      console.error("Signup error caught:", error);
       toast.error(error.message || "Failed to sign up");
       throw error;
     } finally {
@@ -89,10 +119,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      console.log("Logging out");
       await supabase.auth.signOut();
       localStorage.removeItem("csvFileName");
       navigate("/login");
     } catch (error: any) {
+      console.error("Logout error:", error);
       toast.error(error.message || "Failed to sign out");
     }
   };
