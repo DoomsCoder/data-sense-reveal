@@ -28,6 +28,9 @@ const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const [open, setOpen] = useState(false);
   
+  // Get user's name from metadata if available, otherwise use email
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
+  
   const navItems = [
     { path: "/", label: "Home", icon: Home, requiresAuth: false },
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, requiresAuth: true },
@@ -66,7 +69,7 @@ const Navbar = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative ml-2">
                 <User className="h-4 w-4 mr-2" />
-                <span className="max-w-[100px] truncate">{user?.name}</span>
+                <span className="max-w-[100px] truncate">{userName}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -129,7 +132,7 @@ const Navbar = () => {
                 {isAuthenticated ? (
                   <>
                     <div className="p-4 border rounded-md mb-4">
-                      <div className="font-medium truncate">{user?.name}</div>
+                      <div className="font-medium truncate">{userName}</div>
                       <div className="text-sm text-muted-foreground truncate">{user?.email}</div>
                     </div>
                     <Button 

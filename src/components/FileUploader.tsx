@@ -66,11 +66,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUpload }) => {
 
         // Save dataset to Supabase if user is authenticated
         if (user) {
+          // Convert DataSummary to a plain object that can be serialized to JSON
+          const summaryJson = JSON.parse(JSON.stringify(data.summary));
+          
           await supabase.from('dataset_history').insert({
             user_id: user.id,
             file_name: selectedFile.name,
             file_size: selectedFile.size,
-            summary: data.summary
+            summary: summaryJson
           });
         }
         
