@@ -36,33 +36,27 @@ const Reports = () => {
     const storedFileName = localStorage.getItem("csvFileName");
     if (storedFileName) {
       setFileName(storedFileName);
-    }
-  }, []);
-  
-  // Try to get data from query cache
-  const existingData = queryClient.getQueryData<ParsedData>(["csvData", fileName]);
-  
-  // If no cached data, redirect to home for file upload
-  useEffect(() => {
-    if (!fileName && !existingData) {
+    } else {
+      // No filename in localStorage, redirect to home
       toast.error("Please upload a CSV file first");
       navigate("/");
     }
-  }, [fileName, existingData, navigate]);
+  }, [navigate]);
   
-  // If we need to parse the file again (after page refresh)
+  // Get data from query cache
   const { data, isLoading, error } = useQuery({
     queryKey: ["csvData", fileName],
     queryFn: async () => {
-      // If we already have the data in cache, use it
+      // Check if we already have the data in cache
+      const existingData = queryClient.getQueryData<ParsedData>(["csvData", fileName]);
       if (existingData) return existingData;
       
-      // Otherwise, redirect to home page
+      // If no data in cache but we have filename, show error and redirect
       toast.error("Session expired. Please upload your file again.");
       navigate("/");
       return null;
     },
-    enabled: !existingData && !!fileName,
+    enabled: !!fileName,
   });
   
   const handleExportCSV = () => {

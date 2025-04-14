@@ -1,9 +1,11 @@
-
 import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Upload, X, FileSpreadsheet, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { parseCSV } from "@/utils/csvParser";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface FileUploaderProps {
   onFileUpload: (file: File) => void;
@@ -11,6 +13,9 @@ interface FileUploaderProps {
 
 const FileUploader: React.FC<FileUploaderProps> = ({ onFileUpload }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length) {
@@ -39,9 +44,31 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUpload }) => {
     setSelectedFile(null);
   };
 
-  const handleAnalyzeFile = () => {
+  const handleAnalyzeFile = async () => {
     if (selectedFile) {
-      onFileUpload(selectedFile);
+      setIsAnalyzing(true);
+      try {
+        // Parse the file
+        const data = await parseCSV(selectedFile);
+        
+        // Store the data in the query cache
+        queryClient.setQueryData(["csvData", selectedFile.name], data);
+        
+        // Store file name in localStorage
+        localStorage.setItem("csvFileName", selectedFile.name);
+        
+        // Call the onFileUpload callback
+        onFileUpload(selectedFile);
+        
+        // Navigate to dashboard after successful upload
+        toast.success("File analyzed successfully!");
+        navigate("/dashboard");
+      } catch (error) {
+        toast.error("Failed to analyze the file. Please try again.");
+        console.error(error);
+      } finally {
+        setIsAnalyzing(false);
+      }
     }
   };
 
@@ -87,9 +114,19 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUpload }) => {
           <Button 
             onClick={handleAnalyzeFile} 
             className="w-full bg-deep-green hover:bg-deep-green/90"
+            disabled={isAnalyzing}
           >
-            <span>Analyze Data</span>
-            <ArrowRight className="ml-2 h-4 w-4" />
+            {isAnalyzing ? (
+              <>
+                <span>Analyzing...</span>
+                <span className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+              </>
+            ) : (
+              <>
+                <span>Analyze Data</span>
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
           </Button>
         </div>
       )}

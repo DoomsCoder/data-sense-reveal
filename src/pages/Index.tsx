@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { parseCSV, ParsedData } from "@/utils/csvParser";
 import FileUploader from "@/components/FileUploader";
@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { FileSpreadsheet, BarChart2, PieChart, Table, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -31,9 +31,23 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description }) =
 
 const Index = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
-  const { data: parsedData, isLoading, refetch } = useQuery({
+  // Check if we have a previously uploaded file
+  useEffect(() => {
+    const storedFileName = localStorage.getItem("csvFileName");
+    if (storedFileName) {
+      // Check if we have data in the query cache
+      const cachedData = queryClient.getQueryData<ParsedData>(["csvData", storedFileName]);
+      if (cachedData) {
+        // We already have data, no need to fetch it again
+        console.log("Found cached data for", storedFileName);
+      }
+    }
+  }, [queryClient]);
+  
+  const { data: parsedData, refetch } = useQuery({
     queryKey: ["csvData", selectedFile?.name],
     queryFn: async () => {
       if (!selectedFile) return null;
@@ -53,13 +67,7 @@ const Index = () => {
     // Store file reference in localStorage (just the name, not the file itself)
     localStorage.setItem("csvFileName", file.name);
     
-    // Refetch data with the new file
-    await refetch();
-    
-    // After data is loaded, navigate to dashboard
-    if (parsedData) {
-      navigate("/dashboard");
-    }
+    // The rest of the logic is now in the FileUploader component
   };
 
   const features = [
