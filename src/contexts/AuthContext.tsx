@@ -56,24 +56,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error("Login error:", error);
-        throw error;
+        
+        // Handle specific error cases
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password. Please check your credentials and try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          throw new Error("Your email has not been verified. Please check your inbox for a verification link.");
+        } else {
+          throw error;
+        }
       }
       
       console.log("Login successful:", data);
+      toast.success("Login successful!");
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error caught:", error);
-      const errorMessage = error.message || "Failed to sign in";
-      
-      // More user-friendly error messages
-      if (errorMessage.includes("Invalid login credentials")) {
-        toast.error("Invalid email or password. Please check your credentials and try again.");
-      } else if (errorMessage.includes("Email not confirmed")) {
-        toast.error("Your email has not been verified. Please check your inbox for a verification link.");
-      } else {
-        toast.error(errorMessage);
-      }
-      
+      toast.error(error.message || "Failed to sign in");
       throw error;
     } finally {
       setLoading(false);
